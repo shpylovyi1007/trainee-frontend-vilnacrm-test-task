@@ -1,0 +1,17 @@
+.form {
+  background: #fff;
+  width: 450px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .field:not(:last-child) {
+    margin-bottom: 12px;
+  }
+
+  .button {
+    width: 164px;
+    margin-top: 20px;
+  }
+}
