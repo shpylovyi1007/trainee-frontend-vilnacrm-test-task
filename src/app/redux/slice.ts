@@ -1,27 +1,18 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { FormValues } from "../components/Form/Form";
-import { getUsers } from "./operations";
+import { getUsers, RejectedValue, Users } from "./operations";
 
-const handlePending = (state: InitialValues) => {
-  state.loading = true;
-};
-
-const handleRejected = (
-  state: InitialValues,
-  action: PayloadAction<string | null>
-) => {
-  state.loading = false;
-  state.error = action.payload;
-};
-
-interface InitialValues {
-  users: FormValues[];
+interface UserState {
+  items: Users[];
   loading: boolean;
-  error: null | string;
+  error: string | null;
 }
 
-const initialState: InitialValues = {
-  users: [],
+export interface RootState {
+  users: UserState;
+}
+
+const initialState: UserState = {
+  items: [],
   loading: false,
   error: null,
 };
@@ -32,13 +23,21 @@ const usersSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(getUsers.pending, handlePending)
-      .addCase(getUsers.fulfilled, (state, action) => {
+      .addCase(getUsers.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getUsers.fulfilled, (state, action: PayloadAction<Users[]>) => {
         state.loading = false;
         state.error = null;
-        state.users = action.payload;
+        state.items = action.payload;
       })
-      .addCase(getUsers.rejected, handleRejected);
+      .addCase(
+        getUsers.rejected,
+        (state, action: PayloadAction<RejectedValue | undefined>) => {
+          state.loading = false;
+          state.error = action.payload?.error ?? "Unknown error occurred";
+        }
+      );
   },
 });
 

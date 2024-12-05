@@ -5,21 +5,31 @@ import { Formik, Form, Field, FormikHelpers, FieldProps } from "formik";
 import { TextField, Button } from "@mui/material";
 import * as Yup from "yup";
 import css from "./Form.module.scss";
+import { addUser, Users } from "../../redux/operations";
+import { useAppDispatch } from "../../hooks";
 
-export interface FormValues {
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    phone: string;
-    address: {
-      city: string;
-    };
-  };
-}
-
-const initialValues: FormValues = {
-  user: { id: 100, name: "", email: "", phone: "", address: { city: "" } },
+const initialValues: Users = {
+  id: Date.now(),
+  name: "",
+  username: "",
+  email: "",
+  address: {
+    street: "",
+    suite: "",
+    city: "",
+    zipcode: "",
+    geo: {
+      lat: "",
+      lng: "",
+    },
+  },
+  phone: "",
+  website: "",
+  company: {
+    name: "",
+    catchPhrase: "",
+    bs: "",
+  },
 };
 
 const validationSchema = Yup.object().shape({
@@ -28,6 +38,10 @@ const validationSchema = Yup.object().shape({
     .min(2, "Name must be at least 2 characters")
     .max(50, "Name cannot be longer than 50 characters")
     .matches(/^[A-Za-z\s]+$/, "Name can only contain letters"),
+
+  username: Yup.string()
+    .required("Username is required")
+    .max(50, "Username cannot be longer than 50 characters"),
 
   email: Yup.string()
     .required("Email is required")
@@ -41,26 +55,34 @@ const validationSchema = Yup.object().shape({
       "Invalid phone number format"
     ),
 
-  address: Yup.string()
-    .optional()
-    .max(200, "Address cannot be longer than 200 characters"),
+  address: Yup.object().shape({
+    street: Yup.string().optional(),
+    suite: Yup.string().optional(),
+    city: Yup.string().required("City is required"),
+    zipcode: Yup.string().optional(),
+    geo: Yup.object().shape({
+      lat: Yup.string().optional(),
+      lng: Yup.string().optional(),
+    }),
+  }),
+
+  company: Yup.object().shape({
+    name: Yup.string().optional(),
+    catchPhrase: Yup.string().optional(),
+    bs: Yup.string().optional(),
+  }),
 });
 
-const handleSubmit = (
-  values: FormValues,
-  actions: FormikHelpers<FormValues>
-) => {
-  const formDataWithId = {
-    ...values,
-    id: Date.now(),
-  };
-
-  console.log(formDataWithId);
-
-  actions.resetForm();
-};
-
 const MyForm = () => {
+  const dispatch = useAppDispatch();
+
+  const handleSubmit = (values: Users, actions: FormikHelpers<Users>) => {
+    console.log(values);
+
+    dispatch(addUser(values));
+
+    actions.resetForm();
+  };
   return (
     <Formik
       initialValues={initialValues}
@@ -74,6 +96,18 @@ const MyForm = () => {
               <TextField
                 {...field}
                 label="Name"
+                variant="standard"
+                fullWidth
+                error={Boolean(meta.touched && meta.error)}
+                helperText={meta.touched && meta.error ? meta.error : undefined}
+              />
+            )}
+          </Field>
+          <Field className={css.field} name="username">
+            {({ field, meta }: FieldProps) => (
+              <TextField
+                {...field}
+                label="Username"
                 variant="standard"
                 fullWidth
                 error={Boolean(meta.touched && meta.error)}
@@ -105,11 +139,11 @@ const MyForm = () => {
               />
             )}
           </Field>
-          <Field className={css.field} name="address">
+          <Field className={css.field} name="address.city">
             {({ field, meta }: FieldProps) => (
               <TextField
                 {...field}
-                label="Address"
+                label="City"
                 variant="standard"
                 fullWidth
                 error={Boolean(meta.touched && meta.error)}
