@@ -33,7 +33,7 @@ export interface Users {
   company: Company;
 }
 
-interface PatchUserParams {
+export interface PatchUserParams {
   id: number;
   userChange: Partial<Users>;
 }

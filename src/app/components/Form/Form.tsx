@@ -5,15 +5,19 @@ import { TextField, Button } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import * as Yup from "yup";
 import css from "./Form.module.css";
-import { patchUser, Users } from "../../redux/operations";
+import {
+  patchUser,
+  PatchUserParams,
+  Users,
+  Address,
+} from "../../redux/operations";
 import { useAppDispatch } from "../../hooks";
 
 const validationSchema = Yup.object().shape({
   name: Yup.string()
     .required("Name is required")
     .min(2, "Name must be at least 2 characters")
-    .max(50, "Name cannot be longer than 50 characters")
-    .matches(/^[A-Za-z\s]+$/, "Name can only contain letters"),
+    .max(50, "Name cannot be longer than 50 characters"),
 
   username: Yup.string()
     .required("Username is required")
@@ -27,44 +31,68 @@ const validationSchema = Yup.object().shape({
   phone: Yup.string()
     .required("Phone number is required")
     .matches(
-      /^(\+1)?[\s]?\(?[0-9]{3}\)?[\s]?[0-9]{3}[\s]?[0-9]{2}[\s]?[0-9]{2}$/,
+      /^(\+?1[-\s]?)?(\(\d{3}\)|\d{3})[-\s]?\d{3}[-\s]?\d{4}$/,
       "Invalid phone number format"
     ),
 
   address: Yup.object().shape({
-    city: Yup.string().required("City is required"),
+    city: Yup.string()
+      .required("City is required")
+      .max(50, "City name is too long"),
   }),
 });
 
 interface MyFormProps {
-  initialValues: Users; // Приймаємо initialValues як пропс
-  onClose: () => void; // Метод для закриття модалки
+  initialValues: Users;
+  onClose?: () => void;
 }
 
-const MyForm: React.FC<MyFormProps> = ({ initialValues, onClose }) => {
+const MyForm: React.FC<MyFormProps> = ({
+  initialValues,
+  onClose = () => {},
+}) => {
   const dispatch = useAppDispatch();
 
-  const [formValues, setFormValues] = useState<Users>(initialValues);
-  const [errors, setErrors] = useState<Record<string, string | undefined>>({});
+  const [formValues, setFormValues] = useState<Users>({
+    ...initialValues,
+    address: initialValues.address || {
+      street: "",
+      suite: "",
+      city: "",
+      zipcode: "",
+      geo: { lat: "", lng: "" },
+    },
+  });
+
+  const [errors, setErrors] = useState<{
+    name?: string;
+    username?: string;
+    email?: string;
+    phone?: string;
+    address?: {
+      city?: string;
+    };
+  }>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    if (name.startsWith("address.")) {
-      const addressField = name.split(".")[1];
-      setFormValues((prev) => ({
-        ...prev,
-        address: {
-          ...prev.address,
-          [addressField]: value,
-        },
-      }));
-    } else {
-      setFormValues((prev) => ({
+    setFormValues((prev) => {
+      if (name.startsWith("address.")) {
+        const addressField = name.split(".")[1];
+        return {
+          ...prev,
+          address: {
+            ...prev.address,
+            [addressField]: value,
+          } as Address,
+        };
+      }
+      return {
         ...prev,
         [name]: value,
-      }));
-    }
+      };
+    });
 
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
@@ -75,7 +103,12 @@ const MyForm: React.FC<MyFormProps> = ({ initialValues, onClose }) => {
     try {
       await validationSchema.validate(formValues, { abortEarly: false });
 
-      dispatch(patchUser(formValues));
+      const patchParams: PatchUserParams = {
+        id: formValues.id,
+        userChange: formValues,
+      };
+
+      dispatch(patchUser(patchParams));
 
       setFormValues(initialValues);
       setErrors({});
@@ -150,11 +183,16 @@ const MyForm: React.FC<MyFormProps> = ({ initialValues, onClose }) => {
         fullWidth
         value={formValues.address.city}
         onChange={handleChange}
-        error={Boolean(errors.address?.city)}
-        helperText={errors.address?.city}
+        error={Boolean(errors.address && errors.address.city)}
+        helperText={errors.address?.city || ""}
       />
 
-      <Button type="submit" variant="contained" endIcon={<SendIcon />}>
+      <Button
+        className={css.button}
+        type="submit"
+        variant="contained"
+        endIcon={<SendIcon />}
+      >
         Send
       </Button>
     </form>

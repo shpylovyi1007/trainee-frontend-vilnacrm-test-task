@@ -13,6 +13,8 @@
   margin-bottom: 12px;
 }
 
-.button {
+.form .button {
   width: 164px;
+  margin-top: 40px;
+  background-color: black;
 }
