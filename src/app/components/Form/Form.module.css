@@ -1,6 +1,6 @@
 .form {
   background: #fff;
-  width: 450px;
+  max-width: 450px;
   height: max-content;
   padding: 20px;
   display: flex;
@@ -14,7 +14,7 @@
 }
 
 .form .button {
-  width: 164px;
+  max-width: 164px;
   margin-top: 40px;
   background-color: black;
 }

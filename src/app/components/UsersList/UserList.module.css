@@ -1,12 +1,12 @@
 .list {
   display: flex;
   gap: 20px;
-  flex-wrap: wrap;
+  flex-direction: column;
   width: 100%;
 }
 
 .item {
-  width: calc((100% - 40px) / 3);
+  width: 100%;
   border-radius: 4px;
   border: 2px solid #fff;
   background: gray;
@@ -15,12 +15,24 @@
   justify-content: space-between;
 }
 
+@media screen and (min-width: 450px) {
+  .list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .item {
+    width: calc((100% - 40px) / 3);
+  }
+}
+
 .item .button {
   background-color: black;
 }
 
 .button {
   height: max-content;
+  margin-left: auto;
 }
 
 .icon {
