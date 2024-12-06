@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { getUsers, RejectedValue, Users } from "./operations";
+import { getUsers, patchUser, RejectedValue, Users } from "./operations";
 
 interface UserState {
   items: Users[];
@@ -33,6 +33,28 @@ const usersSlice = createSlice({
       })
       .addCase(
         getUsers.rejected,
+        (state, action: PayloadAction<RejectedValue | undefined>) => {
+          state.loading = false;
+          state.error = action.payload?.error ?? "Unknown error occurred";
+        }
+      )
+      .addCase(patchUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(patchUser.fulfilled, (state, action: PayloadAction<Users>) => {
+        const updatedUser = action.payload;
+        state.loading = false;
+        state.error = null;
+
+        const index = state.items.findIndex(
+          (user) => user.id === updatedUser.id
+        );
+        if (index !== -1) {
+          state.items[index] = updatedUser;
+        }
+      })
+      .addCase(
+        patchUser.rejected,
         (state, action: PayloadAction<RejectedValue | undefined>) => {
           state.loading = false;
           state.error = action.payload?.error ?? "Unknown error occurred";

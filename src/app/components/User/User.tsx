@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Users } from "../../redux/operations";
+import css from "./User.module.css";
 
 interface UserProps {
   user: Users;
@@ -9,9 +10,12 @@ interface UserProps {
 
 const User: React.FC<UserProps> = ({ user }) => {
   return (
-    <li>
-      <h2>{user.name}</h2>
-    </li>
+    <div className={css.item}>
+      <h2 className={css.title}>{user.name}</h2>
+      <p>{user.email}</p>
+      <p>{user.phone}</p>
+      <p>{user.address.city}</p>
+    </div>
   );
 };
 

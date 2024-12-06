@@ -71,33 +71,3 @@ export const patchUser = createAsyncThunk<
     });
   }
 });
-
-export const addUser = createAsyncThunk<
-  Users,
-  Users,
-  { rejectValue: RejectedValue }
->("users/addUser", async (userData, thunkAPI) => {
-  try {
-    const response = await axios.post<Users>("users", userData);
-    return response.data;
-  } catch (error) {
-    return thunkAPI.rejectWithValue({
-      error: (error as Error).message || "Error adding user",
-    });
-  }
-});
-
-export const deleteUser = createAsyncThunk<
-  void,
-  number,
-  { rejectValue: RejectedValue }
->("users/deleteUser", async (id, thunkAPI) => {
-  try {
-    await axios.delete(`users/${id}`);
-    return;
-  } catch (error) {
-    return thunkAPI.rejectWithValue({
-      error: (error as Error).message || "Error deleting user",
-    });
-  }
-});

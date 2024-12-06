@@ -1,36 +1,12 @@
 "use client";
 
-import React from "react";
-import { Formik, Form, Field, FormikHelpers, FieldProps } from "formik";
+import React, { useState } from "react";
 import { TextField, Button } from "@mui/material";
+import SendIcon from "@mui/icons-material/Send";
 import * as Yup from "yup";
-import css from "./Form.module.scss";
-import { addUser, Users } from "../../redux/operations";
+import css from "./Form.module.css";
+import { patchUser, Users } from "../../redux/operations";
 import { useAppDispatch } from "../../hooks";
-
-const initialValues: Users = {
-  id: Date.now(),
-  name: "",
-  username: "",
-  email: "",
-  address: {
-    street: "",
-    suite: "",
-    city: "",
-    zipcode: "",
-    geo: {
-      lat: "",
-      lng: "",
-    },
-  },
-  phone: "",
-  website: "",
-  company: {
-    name: "",
-    catchPhrase: "",
-    bs: "",
-  },
-};
 
 const validationSchema = Yup.object().shape({
   name: Yup.string()
@@ -56,107 +32,132 @@ const validationSchema = Yup.object().shape({
     ),
 
   address: Yup.object().shape({
-    street: Yup.string().optional(),
-    suite: Yup.string().optional(),
     city: Yup.string().required("City is required"),
-    zipcode: Yup.string().optional(),
-    geo: Yup.object().shape({
-      lat: Yup.string().optional(),
-      lng: Yup.string().optional(),
-    }),
-  }),
-
-  company: Yup.object().shape({
-    name: Yup.string().optional(),
-    catchPhrase: Yup.string().optional(),
-    bs: Yup.string().optional(),
   }),
 });
 
-const MyForm = () => {
+interface MyFormProps {
+  initialValues: Users; // Приймаємо initialValues як пропс
+  onClose: () => void; // Метод для закриття модалки
+}
+
+const MyForm: React.FC<MyFormProps> = ({ initialValues, onClose }) => {
   const dispatch = useAppDispatch();
 
-  const handleSubmit = (values: Users, actions: FormikHelpers<Users>) => {
-    console.log(values);
+  const [formValues, setFormValues] = useState<Users>(initialValues);
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({});
 
-    dispatch(addUser(values));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
 
-    actions.resetForm();
+    if (name.startsWith("address.")) {
+      const addressField = name.split(".")[1];
+      setFormValues((prev) => ({
+        ...prev,
+        address: {
+          ...prev.address,
+          [addressField]: value,
+        },
+      }));
+    } else {
+      setFormValues((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      await validationSchema.validate(formValues, { abortEarly: false });
+
+      dispatch(patchUser(formValues));
+
+      setFormValues(initialValues);
+      setErrors({});
+      onClose();
+    } catch (validationErrors) {
+      if (validationErrors instanceof Yup.ValidationError) {
+        const formattedErrors = validationErrors.inner.reduce(
+          (acc: Record<string, string>, error) => {
+            if (error.path) {
+              acc[error.path] = error.message;
+            }
+            return acc;
+          },
+          {}
+        );
+
+        setErrors(formattedErrors);
+      }
+    }
+  };
+
   return (
-    <Formik
-      initialValues={initialValues}
-      validationSchema={validationSchema}
-      onSubmit={handleSubmit}
-    >
-      {({ handleSubmit }) => (
-        <Form className={css.form} onSubmit={handleSubmit}>
-          <Field className={css.field} name="name">
-            {({ field, meta }: FieldProps) => (
-              <TextField
-                {...field}
-                label="Name"
-                variant="standard"
-                fullWidth
-                error={Boolean(meta.touched && meta.error)}
-                helperText={meta.touched && meta.error ? meta.error : undefined}
-              />
-            )}
-          </Field>
-          <Field className={css.field} name="username">
-            {({ field, meta }: FieldProps) => (
-              <TextField
-                {...field}
-                label="Username"
-                variant="standard"
-                fullWidth
-                error={Boolean(meta.touched && meta.error)}
-                helperText={meta.touched && meta.error ? meta.error : undefined}
-              />
-            )}
-          </Field>
-          <Field className={css.field} name="email">
-            {({ field, meta }: FieldProps) => (
-              <TextField
-                {...field}
-                label="Email"
-                variant="standard"
-                fullWidth
-                error={Boolean(meta.touched && meta.error)}
-                helperText={meta.touched && meta.error ? meta.error : undefined}
-              />
-            )}
-          </Field>
-          <Field className={css.field} name="phone">
-            {({ field, meta }: FieldProps) => (
-              <TextField
-                {...field}
-                label="Phone"
-                variant="standard"
-                fullWidth
-                error={Boolean(meta.touched && meta.error)}
-                helperText={meta.touched && meta.error ? meta.error : undefined}
-              />
-            )}
-          </Field>
-          <Field className={css.field} name="address.city">
-            {({ field, meta }: FieldProps) => (
-              <TextField
-                {...field}
-                label="City"
-                variant="standard"
-                fullWidth
-                error={Boolean(meta.touched && meta.error)}
-                helperText={meta.touched && meta.error ? meta.error : undefined}
-              />
-            )}
-          </Field>
-          <Button className={css.button} type="submit" variant="contained">
-            Send
-          </Button>
-        </Form>
-      )}
-    </Formik>
+    <form className={css.form} onSubmit={handleSubmit}>
+      <TextField
+        name="name"
+        label="Name"
+        variant="standard"
+        fullWidth
+        value={formValues.name}
+        onChange={handleChange}
+        error={Boolean(errors.name)}
+        helperText={errors.name}
+      />
+
+      <TextField
+        name="username"
+        label="Username"
+        variant="standard"
+        fullWidth
+        value={formValues.username}
+        onChange={handleChange}
+        error={Boolean(errors.username)}
+        helperText={errors.username}
+      />
+
+      <TextField
+        name="email"
+        label="Email"
+        variant="standard"
+        fullWidth
+        value={formValues.email}
+        onChange={handleChange}
+        error={Boolean(errors.email)}
+        helperText={errors.email}
+      />
+
+      <TextField
+        name="phone"
+        label="Phone"
+        variant="standard"
+        fullWidth
+        value={formValues.phone}
+        onChange={handleChange}
+        error={Boolean(errors.phone)}
+        helperText={errors.phone}
+      />
+
+      <TextField
+        name="address.city"
+        label="City"
+        variant="standard"
+        fullWidth
+        value={formValues.address.city}
+        onChange={handleChange}
+        error={Boolean(errors.address?.city)}
+        helperText={errors.address?.city}
+      />
+
+      <Button type="submit" variant="contained" endIcon={<SendIcon />}>
+        Send
+      </Button>
+    </form>
   );
 };
 

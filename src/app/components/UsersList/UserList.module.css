@@ -1,0 +1,25 @@
+.list {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  width: 800px;
+}
+
+.item {
+  width: calc((100% - 20px) / 2);
+  border-radius: 4px;
+  border: 2px solid #fff;
+  background: gray;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.button {
+  height: max-content;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+}
